@@ -223,7 +223,9 @@ INSERT INTO projects (slug, title, description, category, image_url, project_typ
 SELECT v.slug, v.title, v.description, v.category, v.image_url, v.project_type, v.url, v.display_order
 FROM (VALUES
     ('calculator', 'Calculator', 'A clean, responsive calculator built with React. Features basic arithmetic operations, keyboard support, and a modern minimal UI design.', '["React"]'::jsonb, '/assets/previews/Calculator.png', 'mini', '../Projects/Mini-Project/Calculator/index.html', 1),
-    ('timer', 'Timer', 'A countdown and stopwatch timer with start, pause, and reset controls. Built with clean HTML, CSS, and vanilla JavaScript.', '["JavaScript","HTML","CSS"]'::jsonb, '/assets/previews/timer.png', 'mini', '../Projects/Mini-Project/timer/index.html', 2)
+    ('timer', 'Timer', 'A countdown and stopwatch timer with start, pause, and reset controls. Built with clean HTML, CSS, and vanilla JavaScript.', '["JavaScript","HTML","CSS"]'::jsonb, '/assets/previews/timer.png', 'mini', '../Projects/Mini-Project/timer/index.html', 2),
+    ('netbridge', 'NetBridge', 'Share your phone internet to PC with the phone''s VPN applied to the shared connection — free, open source, and under your control. Features Hotspot and USB tethering modes.', '[]'::jsonb, '/assets/previews/NetBridge.png', 'mini', 'https://github.com/MohammadMehdiSadeghi/NetBridge', 5),
+    ('cachecleaner', 'CacheCleaner', 'A Windows cache cleaner desktop GUI app. Scans ~490 cache locations across applications, reports sizes, and safely deletes contents while preserving crucial profiles and keys.', '[]'::jsonb, '/assets/previews/CacheCleaner.png', 'mini', 'https://github.com/MohammadMehdiSadeghi/CacheCleaner', 6)
 ) AS v(slug, title, description, category, image_url, project_type, url, display_order)
 WHERE NOT EXISTS (SELECT 1 FROM projects p WHERE p.slug = v.slug);
 

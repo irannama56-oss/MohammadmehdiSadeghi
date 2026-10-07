@@ -47,5 +47,23 @@
     ],
     "image": "/assets/previews/css-playground.png",
     "githubUrl": null
+  },
+  {
+    "id": 5,
+    "url": "https://github.com/MohammadMehdiSadeghi/NetBridge",
+    "title": "NetBridge",
+    "description": "Share your phone internet to PC with the phone's VPN applied to the shared connection — free, open source, and under your control. Features Hotspot and USB tethering modes.",
+    "category": [],
+    "image": "/assets/previews/NetBridge.png",
+    "githubUrl": "https://github.com/MohammadMehdiSadeghi/NetBridge"
+  },
+  {
+    "id": 6,
+    "url": "https://github.com/MohammadMehdiSadeghi/CacheCleaner",
+    "title": "CacheCleaner",
+    "description": "A Windows cache cleaner desktop GUI app. Scans ~490 cache locations across applications, reports sizes, and safely deletes contents while preserving crucial profiles and keys.",
+    "category": [],
+    "image": "/assets/previews/CacheCleaner.png",
+    "githubUrl": "https://github.com/MohammadMehdiSadeghi/CacheCleaner"
   }
 ]
