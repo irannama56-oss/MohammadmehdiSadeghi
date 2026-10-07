@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 /* ============================================================
    PageTransition — Cyberpunk / Dev Terminal HUD Page Loader
    Displays a sleek terminal execution card (e.g. "RUNNING PROJECTS")
-   for ~1 second on page navigation.
+   for ~800ms on page navigation.
    ============================================================ */
 
 function getRouteMeta(pathname) {
@@ -87,15 +87,15 @@ export default function PageTransition({ active, path }) {
       setFadingOut(false);
       setProgress(15);
 
-      const p1 = setTimeout(() => setProgress(45), 180);
-      const p2 = setTimeout(() => setProgress(78), 450);
-      const p3 = setTimeout(() => setProgress(100), 750);
-      const p4 = setTimeout(() => setFadingOut(true), 900);
+      const p1 = setTimeout(() => setProgress(45), 130);
+      const p2 = setTimeout(() => setProgress(78), 320);
+      const p3 = setTimeout(() => setProgress(100), 540);
+      const p4 = setTimeout(() => setFadingOut(true), 600);
       const p5 = setTimeout(() => {
         setVisible(false);
         setFadingOut(false);
         setProgress(0);
-      }, 1100);
+      }, 800);
 
       return () => {
         clearTimeout(p1);
