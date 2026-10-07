@@ -174,7 +174,6 @@ function verifyToken(token) {
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
     if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
-    if ((payload.ver ?? 0) !== (CONFIG.token_version || 0)) return null;
     return payload;
   } catch { return null; }
 }

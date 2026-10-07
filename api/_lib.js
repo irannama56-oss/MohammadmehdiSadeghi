@@ -89,8 +89,7 @@ const baseConfig = () => ({
   username: process.env.VERCEL_ADMIN_USERNAME || DEFAULT_ADMIN.username,
   password_sha256:
     process.env.VERCEL_ADMIN_PASSWORD_SHA256 || DEFAULT_ADMIN.password_sha256,
-  /* secret is set below from the effective password hash (stable) */
-  secret: "",
+  secret: tokenSecret(),
   token_version: Number(process.env.VERCEL_ADMIN_TOKEN_VERSION || 0),
 });
 
@@ -268,7 +267,6 @@ export function verifyToken(token) {
     );
     if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000))
       return null;
-    if ((payload.ver ?? 0) !== (cfg.token_version || 0)) return null;
     return payload;
   } catch {
     return null;
