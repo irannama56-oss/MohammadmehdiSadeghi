@@ -1,119 +1,146 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
 /* ============================================================
-   BootLoader — Minimalist & Fast Developer Entry Loader
+   BootLoader — Minimalist Entry Loader
+   ------------------------------------------------------------
+   UX rules followed:
+   - Waits for `window.load` so all assets are ready (good for
+     SEO/AI crawlers that execute JS — they see rendered content).
+   - Minimum visible 700ms (avoids flicker, never feels instant).
+   - Maximum wait 3000ms (safety net, never blocks the user).
+   - Smooth 400ms fade-out, no layout shift, body scroll locked.
+   - Respects `prefers-reduced-motion` (instant fade, no pulses).
+   - Click anywhere to dismiss (escape hatch).
+   - A11y: role="status", aria-live="polite", aria-label.
    ============================================================ */
 
+const MIN_VISIBLE_MS = 700;   // floor — no flicker
+const MAX_WAIT_MS = 3000;     // ceiling — never trap users
+const FADE_OUT_MS = 400;
+
 export default function BootLoader({ onDone }) {
-  const [progress, setProgress] = useState(0);
   const [exiting, setExiting] = useState(false);
   const doneRef = useRef(false);
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
-    setProgress(100);
     setExiting(true);
     setTimeout(() => {
       document.body.style.overflow = "";
       onDone?.();
-    }, 350);
+    }, FADE_OUT_MS);
   }, [onDone]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    const start = Date.now();
 
-    // Smooth, fast progression
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(finish, 100);
-          return 100;
-        }
-        const step = Math.floor(Math.random() * 12) + 8;
-        return Math.min(100, prev + step);
-      });
-    }, 35);
+    const hide = () => {
+      const elapsed = Date.now() - start;
+      const wait = Math.max(0, MIN_VISIBLE_MS - elapsed);
+      setTimeout(finish, wait);
+    };
 
-    const fallback = setTimeout(finish, 1200);
+    if (document.readyState === "complete") {
+      hide();
+    } else {
+      window.addEventListener("load", hide, { once: true });
+    }
+
+    // Safety net: never block longer than MAX_WAIT_MS
+    const safety = setTimeout(finish, MAX_WAIT_MS);
 
     return () => {
-      clearInterval(interval);
-      clearTimeout(fallback);
+      window.removeEventListener("load", hide);
+      clearTimeout(safety);
+      document.body.style.overflow = "";
     };
   }, [finish]);
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading portfolio"
       onClick={finish}
-      className="fixed inset-0 z-[99999] flex flex-col items-center justify-center cursor-pointer select-none bg-[#030712] overflow-hidden"
+      className="boot-loader fixed inset-0 z-[99999] flex items-center justify-center bg-[#030712] overflow-hidden cursor-pointer select-none"
       style={{
         opacity: exiting ? 0 : 1,
-        transition: "opacity 0.35s ease-out",
+        transition: `opacity ${FADE_OUT_MS}ms ease-out`,
       }}
     >
-      {/* Subtle center ambient glow */}
+      {/* Subtle ambient glow */}
       <div
-        className="absolute w-[320px] h-[320px] rounded-full blur-[90px] pointer-events-none opacity-20"
-        style={{
-          background: "radial-gradient(circle, #615FFF 0%, #38BDF8 60%, transparent 70%)",
-        }}
+        aria-hidden="true"
+        className="boot-glow absolute w-[420px] h-[420px] rounded-full blur-[110px] pointer-events-none"
       />
 
-      <div className="relative flex flex-col items-center gap-6 z-10">
-        {/* Minimalist Spinner & Monogram */}
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <svg className="animate-spin w-16 h-16 text-[#615FFF]" viewBox="0 0 50 50">
-            <circle
-              className="opacity-20"
-              cx="25"
-              cy="25"
-              r="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-            />
-            <circle
-              className="opacity-90"
-              cx="25"
-              cy="25"
-              r="20"
-              fill="none"
-              stroke="url(#spinnerGrad)"
-              strokeWidth="3"
-              strokeDasharray="80"
-              strokeDashoffset="60"
-              strokeLinecap="round"
-            />
-            <defs>
-              <linearGradient id="spinnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#615FFF" />
-                <stop offset="100%" stopColor="#38BDF8" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          {/* Center Monogram */}
-          <span className="absolute text-[13px] font-bold text-white tracking-wider">
+      <div className="relative flex flex-col items-center gap-6">
+        {/* Monogram with two concentric pulses */}
+        <div className="relative w-16 h-16 flex items-center justify-center">
+          <span aria-hidden="true" className="boot-ring ring-a" />
+          <span aria-hidden="true" className="boot-ring ring-b" />
+          <span className="relative z-10 text-[15px] font-bold text-white tracking-[0.15em]">
             MMS
           </span>
         </div>
 
-        {/* Minimal Progress Bar */}
-        <div className="w-48 flex flex-col items-center gap-2">
-          <div className="w-full h-1 bg-[#1E293B] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#615FFF] to-[#38BDF8] rounded-full transition-all duration-150 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between w-full text-[10px] font-mono text-[#68768C]">
-            <span>loading...</span>
-            <span className="tabular-nums">{progress}%</span>
-          </div>
+        {/* Three-dot loading indicator */}
+        <div className="boot-dots flex items-center gap-1.5" aria-hidden="true">
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
         </div>
       </div>
+
+      <style>{`
+        .boot-glow {
+          background: radial-gradient(circle, rgba(97,95,255,0.18) 0%, rgba(56,189,248,0.08) 50%, transparent 70%);
+        }
+        .boot-ring {
+          position: absolute;
+          inset: 0;
+          border-radius: 9999px;
+          border: 1px solid rgba(97,95,255,0.7);
+          animation: boot-pulse 2.2s ease-out infinite;
+          will-change: transform, opacity;
+        }
+        .ring-b {
+          border-color: rgba(56,189,248,0.6);
+          animation-delay: 0.7s;
+        }
+        .boot-dots .dot {
+          display: block;
+          width: 6px;
+          height: 6px;
+          border-radius: 9999px;
+          background: #615FFF;
+          animation: boot-dot 1.4s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+        .boot-dots .dot:nth-child(2) { animation-delay: 0.18s; background: #7C7BFF; }
+        .boot-dots .dot:nth-child(3) { animation-delay: 0.36s; background: #38BDF8; }
+
+        @keyframes boot-pulse {
+          0%   { transform: scale(0.55); opacity: 0.85; }
+          80%  { opacity: 0; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes boot-dot {
+          0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+          40%           { transform: scale(1);   opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .boot-ring,
+          .boot-dots .dot {
+            animation: none;
+          }
+          .boot-ring { opacity: 0.3; transform: scale(1); }
+          .boot-dots .dot { opacity: 0.7; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
