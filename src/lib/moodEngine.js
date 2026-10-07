@@ -1,7 +1,7 @@
 /**
- * Deep Multi-Dimensional Emotion & Mood Intelligence Engine
- * Supports nuanced Persian & English NLP, sentiment negation, compound phrases,
- * artist/song aliases, and acoustic DSP vibe matching.
+ * Deep Multi-Dimensional Emotion, Mood & NLP Intelligence Engine (v3.0)
+ * Supports nuanced Persian, English & Finglish NLP, superlative intensity scoring,
+ * compound sentiment detection, fuzzy typo correction, and acoustic DSP vibe matching.
  */
 
 export const MOOD_DIMS = [
@@ -33,6 +33,7 @@ export const ARTIST_ALIASES = {
   "د ویکند": "the weeknd",
   "ایمجین دراگونز": "imagine dragons",
   "دراگون": "imagine dragons",
+  "ایمجین دراگون": "imagine dragons",
   "تیلور": "taylor swift",
   "تیلور سویفت": "taylor swift",
   "تایلور": "taylor swift",
@@ -54,8 +55,118 @@ export const ARTIST_ALIASES = {
   "د فور وی دی": "d4vd",
   "هارملس": "harmless",
   "ماریاس": "the marías",
+  "د ماریاس": "the marías",
   "وایت استریپس": "the white stripes",
   "جاستین بیبر": "justin bieber",
+  "وان ریپابلیک": "onerepublic",
+  "کیلی مینوگ": "kylie minogue",
+};
+
+// Finglish / Pinglish phonetic transliteration dictionary
+export const FINGLISH_MAP = {
+  "shad": "شاد",
+  "shadi": "شادی",
+  "shadman": "شاد",
+  "shadab": "شاد",
+  "shadtarin": "شادترین",
+  "kheyli": "خیلی",
+  "kheli": "خیلی",
+  "ahang": "آهنگ",
+  "ahange": "آهنگ",
+  "music": "موزیک",
+  "ghamgin": "غمگین",
+  "qamgin": "غمگین",
+  "gham": "غم",
+  "qam": "غم",
+  "ghose": "غصه",
+  "qose": "غصه",
+  "ashk": "اشک",
+  "gerye": "گریه",
+  "geryam": "گریم",
+  "boghz": "بغض",
+  "halam": "حالم",
+  "bade": "بده",
+  "khoobe": "خوبه",
+  "khube": "خوبه",
+  "delam": "دلم",
+  "tang": "تنگ",
+  "tangi": "دلتنگی",
+  "deltang": "دلتنگ",
+  "deltangi": "دلتنگی",
+  "shode": "شده",
+  "shodam": "شدم",
+  "shodi": "شدی",
+  "khoshhal": "خوشحال",
+  "khoshhali": "خوشحالی",
+  "ashegh": "عاشق",
+  "asheq": "عاشق",
+  "asheghane": "عاشقانه",
+  "asheqane": "عاشقانه",
+  "asheghetam": "عاشقتم",
+  "eshgh": "عشق",
+  "eshq": "عشق",
+  "eshgham": "عشق",
+  "del": "دل",
+  "ghalb": "قلب",
+  "shekaste": "شکسته",
+  "delshkaste": "دلشکسته",
+  "tanha": "تنها",
+  "tanham": "تنهام",
+  "tanhayi": "تنهایی",
+  "tanhai": "تنهایی",
+  "tanhaei": "تنهایی",
+  "aroom": "آرامش",
+  "aram": "آرام",
+  "aramesh": "آرامش",
+  "aramsh": "آرامش",
+  "khab": "خواب",
+  "khabi": "خواب",
+  "tamarkoz": "تمرکز",
+  "dars": "درس",
+  "motalehe": "مطالعه",
+  "varzesh": "ورزش",
+  "bashgah": "باشگاه",
+  "tamrin": "تمرین",
+  "enerzhi": "انرژی",
+  "energy": "انرژی",
+  "bombe": "بمب",
+  "hemasi": "حماسی",
+  "angizeshi": "انگیزشی",
+  "angize": "انگیزه",
+  "khaste": "خسته",
+  "khastam": "خسته",
+  "khastegi": "خستگی",
+  "depres": "افسرده",
+  "asabani": "عصبانی",
+  "kheshm": "خشم",
+  "raghs": "رقص",
+  "party": "پارتی",
+  "mehmooni": "مهمونی",
+  "baroon": "باران",
+  "barooni": "باران",
+  "paeez": "پاییز",
+  "zemestan": "زمستان",
+  "shab": "شب",
+  "shabane": "شبانه",
+  "tarik": "تاریک",
+  "ghadimi": "قدیمی",
+  "khaterat": "خاطرات",
+  "nostalzhi": "نوستالژی",
+  "mikham": "میخوام",
+  "bezan": "بزن",
+  "bezam": "بزن",
+  "lonly": "lonely",
+  "lonley": "lonely",
+  "deppressed": "depressed",
+  "depresed": "depressed",
+  "romantik": "romantic",
+  "danc": "dance",
+  "dancable": "dance",
+  "happines": "happiness",
+  "engery": "energy",
+  "exited": "excited",
+  "relaxe": "relax",
+  "relxing": "relaxing",
 };
 
 // Highest precedence compound phrases (Persian & English)
@@ -199,20 +310,52 @@ export function normalizeText(s) {
     .trim();
 }
 
-export function extractMoodFromQuery(query) {
-  const normQ = normalizeText(query);
+/**
+ * Phonetically translates Finglish/Pinglish tokens into standard Persian/English keywords
+ */
+export function transliterateQuery(rawQuery) {
+  let norm = normalizeText(rawQuery)
+    .replace(/([a-z]+)ترین/gi, "$1 ترین")
+    .replace(/([a-z]+)tarin/gi, "$1 ترین")
+    .replace(/([a-z]+)e\s*tarin/gi, "$1 ترین");
+
+  const words = norm.split(/\s+/);
+  const translated = [];
+
+  for (const w of words) {
+    if (FINGLISH_MAP[w]) {
+      translated.push(FINGLISH_MAP[w]);
+    } else {
+      translated.push(w);
+    }
+  }
+
+  return {
+    original: norm,
+    expanded: translated.join(" ")
+  };
+}
+
+export function extractMoodFromQuery(queryRaw) {
+  const qStr = String(queryRaw || "").trim();
+  const { original: query, expanded } = transliterateQuery(qStr);
+  const normQ = normalizeText(`${query} ${expanded}`);
+
   const moods = {};
   let detectedEnergy = "medium";
   let detectedValence = "neutral";
   let labelFa = "";
   let labelEn = "";
 
-  // 1. Check Compound Phrases first (highest priority)
+  // 1. Check superlatives
+  const isSuperlative = /(?:ترین|ترین ها|most|highest|best|deepest|happiest|saddest|calmest|bombe\s*tarin|shad\s*tarin)/i.test(queryRaw);
+
+  // 2. Check Compound Phrases first (highest priority)
   let compoundMatched = false;
   for (const entry of COMPOUND_PHRASES) {
-    if (entry.pattern.test(query) || entry.pattern.test(normQ)) {
+    if (entry.pattern.test(qStr) || entry.pattern.test(query) || entry.pattern.test(expanded)) {
       for (const [dim, weight] of Object.entries(entry.dims)) {
-        moods[dim] = Math.max(moods[dim] || 0, weight);
+        moods[dim] = Math.max(moods[dim] || 0, weight * (isSuperlative ? 1.25 : 1.0));
       }
       if (entry.energy) detectedEnergy = entry.energy;
       if (entry.valence) detectedValence = entry.valence;
@@ -222,7 +365,7 @@ export function extractMoodFromQuery(query) {
     }
   }
 
-  // 2. Check negations
+  // 3. Check negations
   const isNegatedJoy = /(?:شاد نیست|خوشحال نیست|حالم خوب نیست|خوب نیستم|اصلا شاد|شادی نیست|شاد نباش)/.test(normQ);
   const isNegatedSad = /(?:غمگین نباش|ناراحت نباش|غم نباش|غمگین نیست|نمیخوام غمگین)/.test(normQ);
   const isNegatedCalm = /(?:خسته نیست|آروم نباش|خواب آور نباش)/.test(normQ);
@@ -250,14 +393,14 @@ export function extractMoodFromQuery(query) {
     detectedEnergy = "high";
   }
 
-  // 3. Regular lexical match
+  // 4. Regular lexical match
   for (const entry of MOOD_LEXICON) {
-    if (entry.pattern.test(query) || entry.pattern.test(normQ)) {
+    if (entry.pattern.test(qStr) || entry.pattern.test(query) || entry.pattern.test(expanded)) {
       if (compoundMatched && detectedValence === "negative" && entry.valence === "positive") {
         continue;
       }
       for (const [dim, weight] of Object.entries(entry.dims)) {
-        moods[dim] = Math.max(moods[dim] || 0, weight);
+        moods[dim] = Math.max(moods[dim] || 0, weight * (isSuperlative ? 1.25 : 1.0));
       }
       if (!compoundMatched && entry.energy) detectedEnergy = entry.energy;
       if (!compoundMatched && entry.valence) detectedValence = entry.valence;
@@ -267,10 +410,10 @@ export function extractMoodFromQuery(query) {
   }
 
   // Energy / Valence defaults
-  if (detectedEnergy === "high") moods.energy = Math.max(moods.energy || 0, 0.4);
-  if (detectedEnergy === "low") moods.calm = Math.max(moods.calm || 0, 0.4);
-  if (detectedValence === "positive") moods.joy = Math.max(moods.joy || 0, 0.35);
-  if (detectedValence === "negative") moods.sadness = Math.max(moods.sadness || 0, 0.35);
+  if (detectedEnergy === "high") moods.energy = Math.max(moods.energy || 0, 0.45);
+  if (detectedEnergy === "low") moods.calm = Math.max(moods.calm || 0, 0.45);
+  if (detectedValence === "positive") moods.joy = Math.max(moods.joy || 0, 0.4);
+  if (detectedValence === "negative") moods.sadness = Math.max(moods.sadness || 0, 0.4);
 
   if (!labelFa) {
     const sortedDims = Object.entries(moods).sort((a, b) => b[1] - a[1]);
@@ -288,6 +431,7 @@ export function extractMoodFromQuery(query) {
     moods,
     energy: detectedEnergy,
     valence: detectedValence,
+    isSuperlative,
     labelFa: labelFa || "احساس شناسایی شده",
     labelEn: labelEn || "Detected Mood",
   };
@@ -295,7 +439,7 @@ export function extractMoodFromQuery(query) {
 
 export function executeMoodSearch(songs, queryRaw) {
   const query = String(queryRaw || "").trim();
-  const normQ = normalizeText(query);
+  const { original: normQ, expanded } = transliterateQuery(query);
   const qm = extractMoodFromQuery(query);
 
   const scored = (songs || []).map((song) => {
@@ -326,36 +470,44 @@ export function executeMoodSearch(songs, queryRaw) {
     }
 
     if (song.analysis) {
-      if (qm.energy === "high" && song.analysis.energy >= 60) aud += 0.15;
-      if (qm.energy === "low" && song.analysis.energy <= 45) aud += 0.15;
+      if (qm.energy === "high" && song.analysis.energy >= 60) aud += 0.2;
+      if (qm.energy === "low" && song.analysis.energy <= 45) aud += 0.2;
     }
 
     const faTags = (song.tags || []).map(normalizeText);
     const enTags = (song.tagsEn || []).map((t) => String(t).toLowerCase());
     let tagHit = 0;
-    const qWords = normQ.split(/\s+/).filter((w) => w.length >= 2);
+    const qWords = `${normQ} ${expanded}`.split(/\s+/).filter((w) => w.length >= 2);
     for (const qw of qWords) {
-      if (faTags.some((t) => t === qw)) tagHit += 0.35;
-      else if (faTags.some((t) => t.includes(qw) || qw.includes(t))) tagHit += 0.15;
-      if (enTags.some((t) => t === qw)) tagHit += 0.35;
-      else if (enTags.some((t) => t.includes(qw) || qw.includes(t))) tagHit += 0.15;
+      if (faTags.some((t) => t === qw)) tagHit += 0.4;
+      else if (faTags.some((t) => t.includes(qw) || qw.includes(t))) tagHit += 0.2;
+      if (enTags.some((t) => t === qw)) tagHit += 0.4;
+      else if (enTags.some((t) => t.includes(qw) || qw.includes(t))) tagHit += 0.2;
     }
     const tag = Math.min(1, tagHit);
 
-    let score = 0.55 * sem + 0.20 * tag + 0.25 * aud;
+    let score = 0.50 * sem + 0.25 * tag + 0.25 * aud;
+
+    // Superlative bonus
+    if (qm.isSuperlative) {
+      const topDim = Object.entries(qm.moods).sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (topDim && sm[topDim] && sm[topDim] >= 0.85) {
+        score += 0.4;
+      }
+    }
 
     // Direct name / artist match bonus
     const sNameNorm = normalizeText(song.name);
     const sArtistNorm = normalizeText(song.artist);
-    if (sNameNorm === normQ || sArtistNorm === normQ) score += 3.0;
-    else if (sNameNorm.includes(normQ) || sArtistNorm.includes(normQ)) score += 2.0;
-    else if (normQ.length >= 4 && (normQ.includes(sNameNorm) || normQ.includes(sArtistNorm))) score += 1.5;
+    if (sNameNorm === normQ || sArtistNorm === normQ) score += 3.5;
+    else if (sNameNorm.includes(normQ) || sArtistNorm.includes(normQ)) score += 2.2;
+    else if (normQ.length >= 4 && (normQ.includes(sNameNorm) || normQ.includes(sArtistNorm))) score += 1.8;
 
     // Check artist aliases (e.g. searching "امینم" or "ادل")
     for (const [faName, enName] of Object.entries(ARTIST_ALIASES)) {
-      if (normQ.includes(faName)) {
+      if (normQ.includes(faName) || expanded.includes(faName)) {
         if (sArtistNorm.includes(enName)) {
-          score += 2.5;
+          score += 3.0;
         }
       }
     }
