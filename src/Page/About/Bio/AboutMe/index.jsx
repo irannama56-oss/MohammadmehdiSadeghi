@@ -3,7 +3,7 @@ import React from "react";
 const lines = [
   "/**",
   "* About me",
-  "* I'm a web developer with experience in building modern and",
+  "* I'm a Front-end developer with experience in building modern and",
   "* responsive websites using HTML, CSS, JavaScript, React and WordPress.",
   "*",
   "* I have worked on educational platforms, startup projects and business",

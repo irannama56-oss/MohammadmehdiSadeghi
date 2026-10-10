@@ -2,7 +2,7 @@
 
 > **Front-end developer**
 
-Web developer with experience in building modern, responsive, and high-performance websites and web applications.
+Front-end developer with experience in building modern, responsive, and high-performance websites and web applications.
 
 ---
 
