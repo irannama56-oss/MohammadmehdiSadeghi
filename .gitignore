@@ -44,5 +44,3 @@ data/telegram.json
 *.ogg
 *.opus
 *.aac
-.vercel
-.env*
